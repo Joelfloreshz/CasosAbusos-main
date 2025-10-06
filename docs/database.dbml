@@ -1,0 +1,141 @@
+// Sistema de Gestión de Casos - Las Mélidas
+// Versión Simplificada
+
+Project sigc_melidas {
+  database_type: 'MySQL'
+  Note: 'Sistema básico para gestión de casos'
+}
+
+// =====================================================
+// TABLAS ESENCIALES
+// =====================================================
+
+Table usuarios {
+  id int [pk, increment]
+  usuario varchar(50) [unique, not null]
+  email varchar(100) [unique, not null]
+  password varchar(255) [not null]
+  nombre varchar(100) [not null]
+  rol enum('directora','admin','psicologa','abogada') [not null]
+  activo boolean [default: true]
+  fecha_creacion datetime [default: `CURRENT_TIMESTAMP`]
+}
+
+Table proyectos {
+  id int [pk, increment]
+  nombre varchar(200) [not null]
+  donante varchar(150)
+  fecha_inicio date [not null]
+  fecha_fin date [not null]
+  activo boolean [default: true]
+}
+
+Table casos {
+  id int [pk, increment]
+  codigo_caso varchar(30) [unique, not null]
+  tipo enum('psicologico','juridico') [not null]
+  
+  // Datos de la afectada
+  nombre_afectada varchar(150) [not null]
+  dui varchar(10)
+  edad int
+  telefono varchar(20)
+  departamento varchar(50)
+  municipio varchar(50)
+  zona enum('urbana','rural')
+  
+  // Datos del agresor
+  nombre_agresor varchar(150)
+  parentesco_agresor varchar(100)
+  
+  // Información básica
+  fecha_ingreso date [not null]
+  motivo text
+  estado enum('activo','cerrado') [default: 'activo']
+  
+  // Responsable
+  usuario_id int [not null]
+  proyecto_id int
+  fecha_creacion datetime [default: `CURRENT_TIMESTAMP`]
+}
+
+Table seguimientos {
+  id int [pk, increment]
+  caso_id int [not null]
+  fecha date [not null]
+  descripcion text [not null]
+  proxima_cita date
+  usuario_id int [not null]
+  fecha_creacion datetime [default: `CURRENT_TIMESTAMP`]
+}
+
+// =====================================================
+// FORMULARIOS DINÁMICOS
+// =====================================================
+
+Table formularios {
+  id int [pk, increment]
+  nombre varchar(200) [not null]
+  tipo enum('ingreso','seguimiento','evaluacion') [not null]
+  area enum('psicologica','juridica','ambas') [not null]
+  activo boolean [default: true]
+  creado_por int [not null]
+  fecha_creacion datetime [default: `CURRENT_TIMESTAMP`]
+}
+
+Table preguntas {
+  id int [pk, increment]
+  formulario_id int [not null]
+  numero int [not null]
+  pregunta text [not null]
+  tipo_respuesta enum('texto','numero','si_no','multiple') [not null]
+  opciones text [note: 'Opciones separadas por comas si aplica']
+  requerida boolean [default: false]
+  
+  indexes {
+    (formulario_id, numero) [unique]
+  }
+}
+
+Table sesiones {php artisan make:model Sesion -m
+  id int [pk, increment]
+  caso_id int [not null]
+  formulario_id int [not null]
+  usuario_id int [not null]
+  fecha datetime [default: `CURRENT_TIMESTAMP`]
+  completado boolean [default: false]
+  
+  Note: 'Una sesión es cuando se aplica un formulario a un caso'
+}
+
+Table respuestas {
+  id int [pk, increment]
+  sesion_id int [not null]
+  pregunta_id int [not null]
+  respuesta text
+  
+  indexes {
+    (sesion_id, pregunta_id) [unique]
+  }
+}
+
+// =====================================================
+// RELACIONES
+// =====================================================
+
+Ref: casos.usuario_id > usuarios.id
+Ref: casos.proyecto_id > proyectos.id
+
+Ref: seguimientos.caso_id > casos.id
+Ref: seguimientos.usuario_id > usuarios.id
+
+Ref: formularios.creado_por > usuarios.id
+
+Ref: preguntas.formulario_id > formularios.id
+
+Ref: sesiones.caso_id > casos.id
+Ref: sesiones.formulario_id > formularios.id
+Ref: sesiones.usuario_id > usuarios.id
+
+Ref: respuestas.sesion_id > sesiones.id
+Ref: respuestas.pregunta_id > preguntas.id
