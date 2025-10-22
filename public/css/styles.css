@@ -1,0 +1,372 @@
+/* Ruta: public/css/styles.css */
+
+/* --- Configuración General y Variables --- */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #3498db;
+    --danger-color: #e74c3c;
+    --success-color: #2ecc71;
+    --light-bg: #ecf0f1; 
+    --white-color: #fff;
+    --text-color: #333;
+    --sidebar-width-collapsed: 80px;
+    --sidebar-width-expanded: 250px;
+    --header-height: 70px;
+    --border-radius: 8px;
+    --shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--light-bg);
+    color: var(--text-color);
+    margin: 0;
+    
+}
+
+/* --- Panel Lateral (Sidebar) --- */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--sidebar-width-collapsed);
+    background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: var(--white-color);
+    overflow: hidden;
+    transition: width 0.3s ease;
+    z-index: 1000;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+.sidebar:hover {
+    width: var(--sidebar-width-expanded);
+}
+
+.sidebar-header {
+    padding: 20px 0;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    color: #bdc3c7; 
+    text-decoration: none;
+    padding: 15px 25px;
+    white-space: nowrap;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar-menu li a:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--white-color);
+}
+
+.sidebar-menu .fa-fw {
+    width: 30px; 
+    text-align: center;
+    font-size: 1.2rem;
+    transition: transform 0.3s;
+}
+
+.sidebar-menu li a:hover .fa-fw {
+    transform: scale(1.1);
+}
+
+.sidebar-menu .menu-text {
+    margin-left: 20px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.sidebar:hover .menu-text {
+    opacity: 1;
+    transition-delay: 0.1s;
+}
+
+/* --- Contenido Principal --- */
+.main-content {
+    
+    margin-left: var(--sidebar-width-collapsed);
+    transition: margin-left 0.3s ease;
+    padding-top: var(--header-height); 
+}
+
+
+.sidebar:hover ~ .main-content {
+    margin-left: var(--sidebar-width-expanded);
+}
+
+.top-header {
+    background: var(--white-color);
+    padding: 0 30px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border-bottom: 1px solid #eee;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    
+    width: calc(100% - var(--sidebar-width-collapsed));
+    left: var(--sidebar-width-collapsed);
+    transition: width 0.3s ease, left 0.3s ease;
+    z-index: 999;
+}
+
+
+.sidebar:hover ~ .main-content > .top-header {
+    width: calc(100% - var(--sidebar-width-expanded));
+    left: var(--sidebar-width-expanded);
+}
+
+.top-header h2 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.4rem;
+}
+
+.content-wrapper {
+    padding: 30px;
+}
+
+/* --- Mejoras de Diseño en Componentes --- */
+
+.card {
+    background-color: var(--white-color);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: var(--shadow);
+    border: 1px solid #e0e0e0;
+}
+
+.card-header h2, .card-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px; 
+    color: var(--secondary-color);
+}
+
+/* Mejoras en el Dashboard */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.stat-card .icon {
+    font-size: 2.5rem;
+    color: var(--accent-color);
+}
+.stat-card .info h4 {
+    margin: 0;
+    color: #777;
+    font-weight: 400;
+}
+.stat-card .info p {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.citas-list ul {
+    list-style: none;
+    padding: 0;
+}
+.citas-list li {
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.citas-list li:last-child {
+    border-bottom: none;
+}
+.citas-list .fecha {
+    font-weight: 700;
+    color: var(--accent-color);
+}
+.citas-list .caso-info {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 15px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+thead th { background-color: #f9fafb; color: #555; font-weight: 600; text-transform: uppercase; font-size: 0.85em; }
+tbody tr:hover { background-color: #f1f8fe; } 
+.btn { display: inline-block; padding: 10px 22px; border: none; border-radius: 5px; color: var(--white-color); text-decoration: none; cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+.btn-primary { background-color: var(--accent-color); }
+.btn-primary:hover { background-color: #2980b9; }
+.btn-secondary { background-color: var(--success-color); }
+.btn-secondary:hover { background-color: #27ae60; }
+.btn-danger { background-color: var(--danger-color); }
+.btn-danger:hover { background-color: #c0392b; }
+.actions a, .actions button { margin-right: 8px; }
+.form-group { margin-bottom: 25px; }
+.form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+.form-control { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; transition: border-color 0.3s, box-shadow 0.3s; }
+.form-control:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 5px rgba(52, 152, 219, 0.5); }
+.badge { padding: 5px 12px; border-radius: 15px; color: var(--white-color); font-size: 0.8rem; font-weight: 500; }
+.badge-activo { background-color: var(--success-color); }
+.badge-cerrado { background-color: #95a5a6; }
+.alert { padding: 15px; margin-bottom: 20px; border-radius: 5px; color: var(--white-color); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.alert-success { background-color: var(--success-color); }
+.alert-danger { background-color: var(--danger-color); }
+.grid-2-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+/* --- Estilos para la nueva sección de Seguimientos --- */
+
+/* Creo un grid específico para esta sección, con una columna más ancha para el historial */
+.seguimiento-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr; 
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.historial-seguimientos .card {
+    background-color: #f9f9f9; 
+    border: 1px solid #eee;
+    margin-bottom: 15px;
+}
+
+.historial-seguimientos .card p {
+    margin: 0 0 10px;
+}
+
+.form-seguimiento .card-header h3 {
+    margin-bottom: 0;
+}
+
+
+/* --- Estilos Adicionales para el Dashboard--- */
+.dashboard-welcome {
+    margin-bottom: 30px;
+}
+.dashboard-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0 0 10px 0;
+}
+.dashboard-welcome p {
+    font-size: 1.1rem;
+    color: #555;
+}
+.dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+}
+
+
+
+.seguimiento-card {
+    position: relative; 
+    background-color: #f9fafb;
+}
+
+.seguimiento-card .delete-form {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+
+/* --- Estilos para el Menú de Usuario --- */
+
+.top-header {
+    display: flex;
+    justify-content: space-between; /* Alinea el título a la izquierda y el menú a la derecha */
+    align-items: center;
+}
+
+.user-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.user-button {
+    background-color: transparent;
+    border: none;
+    color: var(--primary-color);
+    padding: 10px 15px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: var(--border-radius);
+    transition: background-color 0.3s;
+}
+
+.user-button:hover {
+    background-color: var(--light-bg);
+}
+
+.user-button .fa-user-circle {
+    font-size: 1.5rem;
+}
+
+.user-button .fa-chevron-down {
+    font-size: 0.8rem;
+    transition: transform 0.3s;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--white-color);
+    min-width: 200px;
+    box-shadow: var(--shadow);
+    border-radius: var(--border-radius);
+    z-index: 1;
+    right: 0;
+    overflow: hidden;
+    border: 1px solid #eee;
+}
+
+.dropdown-content a {
+    color: var(--secondary-color);
+    padding: 12px 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+
+.dropdown-content a:hover {
+    background-color: var(--light-bg);
+    color: var(--primary-color);
+}
+
+/* Muestra el dropdown cuando se pasa el mouse sobre el user-menu */
+.user-menu:hover .dropdown-content {
+    display: block;
+}
+
+.user-menu:hover .user-button .fa-chevron-down {
+    transform: rotate(180deg);
+}
