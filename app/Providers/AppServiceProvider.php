@@ -2,23 +2,29 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use App\Models\Caso; // Asegúrate de importar el modelo Caso
+use App\Policies\CasoPolicy; // Asegúrate de importar la CasoPolicy
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
-class AppServiceProvider extends ServiceProvider
+class AuthServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * The policy mappings for the application.
+     *
+     * @var array<class-string, class-string>
      */
-    public function register(): void
-    {
-        //
-    }
+    protected $policies = [
+        // 'App\Models\Model' => 'App\Policies\ModelPolicy', // Ejemplo de Breeze
+        Caso::class => CasoPolicy::class, // <-- AÑADE O VERIFICA ESTA LÍNEA
+    ];
 
     /**
-     * Bootstrap any application services.
+     * Register any authentication / authorization services.
      */
     public function boot(): void
     {
+        $this->registerPolicies();
+
         //
     }
 }

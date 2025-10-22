@@ -3,106 +3,139 @@
 namespace App\Http\Controllers\Abogada;
 
 use App\Http\Controllers\Controller;
-use App\Models\Caso; 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; 
+use App\Models\Caso;
+use App\Models\Proyecto; // Importar Proyecto
+use Illuminate\Http\Request; // Importar Request
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class CasoController extends Controller
 {
-    /**
-     * Muestro una lista de todos los casos jurídicos.
-     */
-    public function index()
-    {
-        // Obtengo de la base de datos solo los casos de tipo 'juridico'.
-        // Con 'with('usuario')' traigo también los datos de quien lo registró.
-        // 'latest()' los ordena del más nuevo al más viejo.
-        $casos = Caso::where('tipo', 'juridico')->with('usuario')->latest()->get();
+    use AuthorizesRequests;
 
-        // Envío los datos a la vista para que se muestren en la tabla.
-        return view('abogada.casos.index', compact('casos'));
+    public function index(Request $request) // Añadir Request $request
+    {
+        $abogadaId = Auth::id();
+        $proyectos = Proyecto::orderBy('nombre')->get(); // Obtener proyectos para el filtro
+
+        // Obtener filtros de la solicitud
+        $filtros = $request->only(['estado', 'nombre_afectada', 'codigo_caso', 'proyecto_id']);
+
+        // Construir la consulta base
+        $query = Caso::where('usuario_id', $abogadaId)
+                     ->with(['usuario', 'proyecto']) // Cargar relaciones
+                     ->orderBy('fecha_ingreso', 'desc');
+
+        // Aplicar filtros dinámicamente
+        $query->when($filtros['estado'] ?? null, function ($q, $estado) {
+            return $q->where('estado', $estado);
+        });
+
+        $query->when($filtros['nombre_afectada'] ?? null, function ($q, $nombre) {
+            return $q->where('nombre_afectada', 'like', '%' . $nombre . '%');
+        });
+
+        $query->when($filtros['codigo_caso'] ?? null, function ($q, $codigo) {
+            return $q->where('codigo_caso', 'like', '%' . $codigo . '%');
+        });
+
+        $query->when($filtros['proyecto_id'] ?? null, function ($q, $proyectoId) {
+            return $q->where('proyecto_id', $proyectoId);
+        });
+
+        // Paginar resultados y añadir filtros a los enlaces de paginación
+        $casos = $query->paginate(10)->appends($filtros);
+
+        // Pasar casos, proyectos y filtros a la vista
+        return view('abogada.casos.index', compact('casos', 'proyectos', 'filtros'));
     }
 
-    /**
-     * Muestro el formulario para crear un nuevo caso.
-     */
+
     public function create()
     {
-        // Solo muestro el formulario vacío.
-        return view('abogada.casos.form');
+        $proyectos = Proyecto::orderBy('nombre')->get();
+        return view('abogada.casos.form', compact('proyectos'));
     }
 
-    /**
-     * Guardo un nuevo caso en la base de datos.
-     */
     public function store(Request $request)
     {
-        // Verifico que los datos del formulario sean correctos.
-        $request->validate([
-            'codigo_caso' => 'required|string|max:30|unique:casos',
-            'nombre_afectada' => 'required|string|max:150',
-            'fecha_ingreso' => 'required|date',
+        $validated = $request->validate([
+            'codigo_caso' => ['required', 'string', 'max:255', Rule::unique('casos')],
+            'fecha_ingreso' => ['required', 'date'],
+            'estado' => ['required', 'string', Rule::in(['activo', 'cerrado'])],
+            'proyecto_id' => ['nullable', 'integer', 'exists:proyectos,id'],
+            'nombre_afectada' => ['required', 'string', 'max:255'],
+            'dui' => ['nullable', 'string', 'max:20'],
+            'edad' => ['nullable', 'integer', 'min:0'],
+            'telefono' => ['nullable', 'string', 'max:20'],
+            'departamento' => ['nullable', 'string', 'max:100'],
+            'municipio' => ['nullable', 'string', 'max:100'],
+            'motivo' => ['nullable', 'string', 'max:5000'],
+            'nombre_agresor' => ['nullable', 'string', 'max:255'],
+            'parentesco_agresor' => ['nullable', 'string', 'max:100'],
+            'estado_civil_agresor' => ['nullable', 'string', 'max:100'],
+            'ocupacion_agresor' => ['nullable', 'string', 'max:255'],
         ]);
 
-        // Creo el caso con todos los datos del formulario y añado los que son fijos.
-        Caso::create($request->all() + [
-            'tipo' => 'juridico', // Defino el tipo como 'juridico' por defecto.
-            'usuario_id' => Auth::id(), // Asigno el ID del usuario que ha iniciado sesión.
-        ]);
+        $caso = new Caso($validated);
+        $caso->usuario_id = Auth::id();
+        $caso->save();
 
-        // Redirijo a la lista de casos con un mensaje de confirmación.
-        return redirect()->route('abogada.casos.index')->with('success', 'Caso creado exitosamente.');
+        if ($request->input('action') == 'save_and_form') {
+            return redirect()->route('abogada.formularios.index', $caso)
+                             ->with('success', 'Caso registrado. Por favor, llene el formulario de ingreso.');
+        }
+
+        return redirect()->route('abogada.casos.show', $caso)
+                         ->with('success', 'Caso registrado exitosamente.');
     }
 
-    /**
-     * Muestro los detalles de un caso específico y sus seguimientos.
-     */
     public function show(Caso $caso)
     {
-        // Cargo la relación con 'seguimientos' y también el 'usuario' que registró cada seguimiento.
-        $caso->load('seguimientos.usuario');
-        
-        // Muestro la vista de detalles del caso.
+        $this->authorize('view', $caso);
+        $caso->load('proyecto');
         return view('abogada.casos.show', compact('caso'));
     }
 
-    /**
-     * Muestro el formulario para editar un caso que ya existe.
-     */
     public function edit(Caso $caso)
     {
-        // Reutilizo el mismo formulario de creación, pero le envío los datos del caso para rellenarlo.
-        return view('abogada.casos.form', compact('caso'));
+        $this->authorize('update', $caso);
+        $proyectos = Proyecto::orderBy('nombre')->get();
+        return view('abogada.casos.form', compact('caso', 'proyectos'));
     }
 
-    /**
-     * Actualizo la información de un caso en la base de datos.
-     */
     public function update(Request $request, Caso $caso)
     {
-        // Verifico los datos. La regla 'unique' se ajusta para ignorar el caso actual.
-        $request->validate([
-            'codigo_caso' => 'required|string|max:30|unique:casos,codigo_caso,' . $caso->id,
-            'nombre_afectada' => 'required|string|max:150',
-            'fecha_ingreso' => 'required|date',
+        $this->authorize('update', $caso);
+
+        $validated = $request->validate([
+            'codigo_caso' => ['required', 'string', 'max:255', Rule::unique('casos')->ignore($caso->id)],
+            'fecha_ingreso' => ['required', 'date'],
+            'estado' => ['required', 'string', Rule::in(['activo', 'cerrado'])],
+            'proyecto_id' => ['nullable', 'integer', 'exists:proyectos,id'],
+            'nombre_afectada' => ['required', 'string', 'max:255'],
+            'dui' => ['nullable', 'string', 'max:20'],
+            'edad' => ['nullable', 'integer', 'min:0'],
+            'telefono' => ['nullable', 'string', 'max:20'],
+            'departamento' => ['nullable', 'string', 'max:100'],
+            'municipio' => ['nullable', 'string', 'max:100'],
+            'motivo' => ['nullable', 'string', 'max:5000'],
+            'nombre_agresor' => ['nullable', 'string', 'max:255'],
+            'parentesco_agresor' => ['nullable', 'string', 'max:100'],
+            'estado_civil_agresor' => ['nullable', 'string', 'max:100'],
+            'ocupacion_agresor' => ['nullable', 'string', 'max:255'],
         ]);
 
-        // Actualizo el caso con los datos del formulario.
-        $caso->update($request->all());
+        $caso->update($validated);
 
-        // Redirijo a la lista de casos con un mensaje de confirmación.
-        return redirect()->route('abogada.casos.index')->with('success', 'Caso actualizado exitosamente.');
+        return redirect()->route('abogada.casos.show', $caso)->with('success', 'Caso actualizado exitosamente.');
     }
 
-    /**
-     * Elimino un caso de la base de datos.
-     */
     public function destroy(Caso $caso)
     {
-        // Borro el caso.
+        $this->authorize('delete', $caso);
         $caso->delete();
-
-        // Redirijo a la lista de casos con un mensaje de confirmación.
         return redirect()->route('abogada.casos.index')->with('success', 'Caso eliminado exitosamente.');
     }
 }
