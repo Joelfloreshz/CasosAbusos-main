@@ -1,0 +1,164 @@
+// Sistema de Gestión de Casos - Las Mélidas
+// Versión Actualizada
+
+Project sigc_melidas {
+  database_type: 'MySQL'
+  Note: 'Sistema básico para gestión de casos con campos actualizados'
+}
+
+// =====================================================
+// TABLAS ESENCIALES
+// =====================================================
+
+Table usuarios {
+  id int [pk, increment]
+  usuario varchar(50) [unique, not null]
+  email varchar(100) [unique, not null]
+  password varchar(255) [not null]
+  nombre varchar(100) [not null]
+  rol enum('directora','admin','psicologa','abogada') [not null]
+  activo boolean [default: true]
+  // fecha_creacion datetime [default: `CURRENT_TIMESTAMP`] // Laravel maneja created_at/updated_at
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table proyectos {
+  id int [pk, increment]
+  nombre varchar(200) [not null]
+  donante varchar(150)
+  fecha_inicio date [not null]
+  fecha_fin date [not null]
+  activo boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table casos {
+  id int [pk, increment]
+  codigo_caso varchar(30) [unique, not null]
+  // tipo enum('psicologico','juridico') [not null] 
+
+  // Datos de la afectada
+  nombre_afectada varchar(150) [not null]
+  dui varchar(10)
+  edad int
+  telefono varchar(20)
+  departamento varchar(50)
+  municipio varchar(50)
+  // zona enum('urbana','rural') 
+
+  // Información básica
+  fecha_ingreso date [not null]
+  motivo text
+  estado enum('activo', 'cerrado', 'En Juicio') [default: 'activo', not null] // ACTUALIZADO con 'En Juicio'
+
+  // Datos del agresor (Añadidos por migraciones)
+  nombre_agresor varchar(150) 
+  parentesco_agresor varchar(100) 
+  estado_civil_agresor varchar(100) 
+  ocupacion_agresor varchar(255) 
+
+  // Responsable y Proyecto
+  usuario_id int [not null]
+  proyecto_id int 
+
+  // fecha_creacion datetime [default: `CURRENT_TIMESTAMP`] // Laravel maneja created_at/updated_at
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+}
+
+Table seguimientos {
+  id int [pk, increment]
+  caso_id int [not null]
+  fecha date [not null]
+  tipo_actuacion varchar(100) 
+  descripcion text [not null]
+  proxima_cita date 
+  usuario_id int [not null]
+  // fecha_creacion datetime [default: `CURRENT_TIMESTAMP`] // Laravel maneja created_at/updated_at
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+// =====================================================
+// FORMULARIOS DINÁMICOS
+// =====================================================
+
+Table formularios {
+  id int [pk, increment]
+  nombre varchar(200) [not null]
+  tipo enum('ingreso','seguimiento','evaluacion') [not null]
+  area enum('psicologica','juridica','ambas') [not null]
+  activo boolean [default: true]
+  // creado_por int [not null] 
+  usuario_id int [not null]
+  // fecha_creacion datetime [default: `CURRENT_TIMESTAMP`] // Laravel maneja created_at/updated_at
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table preguntas {
+  id int [pk, increment]
+  formulario_id int [not null]
+  numero int [not null] 
+  pregunta text [not null]
+  tipo_respuesta enum('texto','numero','si_no','multiple','corta') [not null] 
+  opciones text [note: 'Opciones separadas por comas si aplica'] 
+  requerida boolean [default: false]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (formulario_id, numero) [unique] 
+  }
+}
+
+Table sesiones {
+  id int [pk, increment]
+  caso_id int [not null]
+  formulario_id int [not null]
+  usuario_id int [not null]
+  // fecha datetime [default: `CURRENT_TIMESTAMP`] // Laravel maneja created_at
+  completado boolean [default: false]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  Note: 'Una sesión es cuando se aplica un formulario a un caso'
+}
+
+Table respuestas {
+  id int [pk, increment]
+  sesion_id int [not null]
+  pregunta_id int [not null]
+  respuesta text // [nullable] se quita
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (sesion_id, pregunta_id) [unique]
+  }
+}
+
+// =====================================================
+// RELACIONES
+// =====================================================
+
+Ref: casos.usuario_id > usuarios.id // Un caso pertenece a un usuario
+Ref: casos.proyecto_id > proyectos.id // Un caso puede pertenecer a un proyecto
+
+Ref: seguimientos.caso_id > casos.id // Un seguimiento pertenece a un caso
+Ref: seguimientos.usuario_id > usuarios.id // Un seguimiento es registrado por un usuario
+
+// Ref: formularios.creado_por > usuarios.id // Se actualizó a usuario_id
+Ref: formularios.usuario_id > usuarios.id // Un formulario es creado por un usuario
+
+Ref: preguntas.formulario_id > formularios.id // Una pregunta pertenece a un formulario
+
+Ref: sesiones.caso_id > casos.id // Una sesión pertenece a un caso
+Ref: sesiones.formulario_id > formularios.id // Una sesión usa un formulario
+Ref: sesiones.usuario_id > usuarios.id // Una sesión es registrada por un usuario
+
+Ref: respuestas.sesion_id > sesiones.id // Una respuesta pertenece a una sesión
+Ref: respuestas.pregunta_id > preguntas.id // Una respuesta corresponde a una pregunta

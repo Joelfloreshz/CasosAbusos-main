@@ -3,45 +3,38 @@
 namespace App\Http\Controllers\Abogada;
 
 use App\Http\Controllers\Controller;
-use App\Models\Caso; 
-use App\Models\Seguimiento; 
+use App\Models\Caso;
+use App\Models\Seguimiento;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests; 
 
 class SeguimientoController extends Controller
 {
-    /**
-     * Aquí guardo un nuevo seguimiento asociado a un caso.
-     */
+    use AuthorizesRequests; 
     public function store(Request $request, Caso $caso)
     {
-        // Valido que la descripción y la fecha no estén vacías.
-        $request->validate([
-            'descripcion' => 'required|string',
-            'fecha' => 'required|date',
-            'proxima_cita' => 'nullable|date|after_or_equal:fecha',
+        $this->authorize('update', $caso); 
+        $validated = $request->validate([
+            'fecha' => ['required', 'date'],
+            'tipo_actuacion' => ['nullable', 'string', 'max:100'],
+            'descripcion' => ['required', 'string', 'max:5000'],
+            'proxima_cita' => ['nullable', 'date', 'after_or_equal:fecha'],
         ]);
-
-        // Creo el nuevo seguimiento y lo asocio directamente con el caso.
-        $caso->seguimientos()->create([
-            'descripcion' => $request->descripcion,
-            'fecha' => $request->fecha,
-            'proxima_cita' => $request->proxima_cita,
-            'usuario_id' => 4, // !!! OJO: De nuevo, ID temporal. Debe ser reemplazado por `auth()->id()`.
-        ]);
-
-        // Redirijo de vuelta a la página del caso con un mensaje de éxito.
-        return back()->with('success', 'Seguimiento agregado exitosamente.');
+        $seguimiento = new Seguimiento($validated);
+        $seguimiento->caso_id = $caso->id;
+        $seguimiento->usuario_id = Auth::id();
+        $seguimiento->save();
+        return redirect()->route('abogada.casos.show', $caso)
+                         ->with('success', 'Seguimiento registrado exitosamente.');
     }
 
-    /**
-     * Aquí elimino un seguimiento.
-     */
     public function destroy(Seguimiento $seguimiento)
     {
-        // Borro el seguimiento.
+        $caso = $seguimiento->caso;
+        $this->authorize('update', $caso); 
         $seguimiento->delete();
-        
-        // Redirijo de vuelta a la página anterior con un mensaje.
-        return back()->with('success', 'Seguimiento eliminado exitosamente.');
+        return redirect()->route('abogada.casos.show', $caso)
+                         ->with('success', 'Seguimiento eliminado exitosamente.');
     }
 }

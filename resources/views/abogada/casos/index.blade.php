@@ -10,8 +10,6 @@
         Nuevo Caso
     </a>
 </div>
-
-{{-- Formulario de Filtros --}}
 <div class="mb-6 bg-white dark:bg-gray-800 shadow rounded-lg p-4">
     <form action="{{ route('abogada.casos.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
         <div>
@@ -27,6 +25,7 @@
             <select name="estado" id="estado" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100 sm:text-sm">
                 <option value="">Todos</option>
                 <option value="activo" @selected(($filtros['estado'] ?? '') == 'activo')>Activo</option>
+                <option value="En Juicio" @selected(($filtros['estado'] ?? '') == 'En Juicio')>En Juicio</option>
                 <option value="cerrado" @selected(($filtros['estado'] ?? '') == 'cerrado')>Cerrado</option>
             </select>
         </div>
@@ -70,9 +69,6 @@
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Estado
                 </th>
-                {{-- <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Responsable
-                </th> --}}
                 <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Acciones
                 </th>
@@ -96,13 +92,16 @@
                        <div class="text-xs text-gray-500">{{ $caso->proyecto->nombre ?? 'Sin proyecto' }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full {{ $caso->estado == 'activo' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
-                            {{ ucfirst($caso->estado) }}
+                        <span @class([
+                            'px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full',
+                            'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200' => $caso->estado == 'activo',
+                             // CAMBIADA LA CONDICIÓN AQUÍ
+                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200' => $caso->estado == 'En Juicio',
+                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' => $caso->estado == 'cerrado',
+                        ])>
+                            {{ match($caso->estado) {'activo' => 'Activo', 'cerrado' => 'Cerrado', 'En Juicio' => 'En Juicio', default => ucfirst($caso->estado)} }}
                         </span>
                     </td>
-                    {{-- <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                        {{ $caso->usuario->nombre }}
-                    </td> --}}
                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div class="flex justify-end items-center space-x-2">
                             <form
@@ -124,7 +123,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center"> {{-- Ajustar colspan a 5 --}}
+                    <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                         No hay casos jurídicos que coincidan con los filtros aplicados.
                     </td>
                 </tr>
@@ -135,7 +134,6 @@
     {{-- Paginación --}}
     @if ($casos->hasPages())
         <div class="px-6 py-4 border-t dark:border-gray-700">
-            {{-- Los enlaces ya incluyen los filtros gracias a ->appends() en el controlador --}}
             {{ $casos->links() }}
         </div>
     @endif

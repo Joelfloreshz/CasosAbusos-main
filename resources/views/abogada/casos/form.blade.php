@@ -38,8 +38,9 @@
                 <div>
                     <label for="estado" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
                     <select id="estado" name="estado" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100 sm:text-sm">
-                        <option value="activo" {{ old('estado', $caso->estado ?? 'activo') == 'activo' ? 'selected' : '' }}>Activo</option>
-                        <option value="cerrado" {{ old('estado', $caso->estado ?? '') == 'cerrado' ? 'selected' : '' }}>Cerrado</option>
+                        <option value="activo" @selected(old('estado', $caso->estado ?? 'activo') == 'activo')>Activo</option>
+                        <option value="En Juicio" @selected(old('estado', $caso->estado ?? '') == 'En Juicio')>En Juicio</option>
+                        <option value="cerrado" @selected(old('estado', $caso->estado ?? '') == 'cerrado')>Cerrado</option>
                     </select>
                 </div>
                 <div class="md:col-span-3">
@@ -55,7 +56,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
             <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Datos de la Afectada</h3>
             <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -136,7 +137,7 @@
             <a href="{{ route('abogada.casos.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-gray-800 dark:text-gray-100 uppercase tracking-widest hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition ease-in-out duration-150">
                 Cancelar
             </a>
-            
+
             @if(isset($caso))
                 <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
                     Actualizar Caso

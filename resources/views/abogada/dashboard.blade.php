@@ -20,6 +20,16 @@
         </div>
 
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex items-center space-x-4">
+            <div class="p-3 rounded-full bg-yellow-100 dark:bg-yellow-800 text-yellow-600 dark:text-yellow-300">
+                 <i class="fas fa-gavel fa-lg"></i> {{-- Icono de martillo --}}
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Casos en Juicio</p>
+                <p class="text-2xl font-semibold text-gray-800 dark:text-gray-100">{{ $casosEnJuicioCount }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex items-center space-x-4">
              <div class="p-3 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                 <i class="fas fa-archive fa-lg"></i>
             </div>

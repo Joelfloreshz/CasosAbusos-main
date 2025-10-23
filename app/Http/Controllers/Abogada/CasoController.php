@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Abogada;
 
 use App\Http\Controllers\Controller;
 use App\Models\Caso;
-use App\Models\Proyecto; // Importar Proyecto
-use Illuminate\Http\Request; // Importar Request
+use App\Models\Proyecto;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -14,20 +14,16 @@ class CasoController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request) // Añadir Request $request
+    public function index(Request $request)
     {
         $abogadaId = Auth::id();
-        $proyectos = Proyecto::orderBy('nombre')->get(); // Obtener proyectos para el filtro
+        $proyectos = Proyecto::orderBy('nombre')->get(); 
 
-        // Obtener filtros de la solicitud
+
         $filtros = $request->only(['estado', 'nombre_afectada', 'codigo_caso', 'proyecto_id']);
-
-        // Construir la consulta base
         $query = Caso::where('usuario_id', $abogadaId)
-                     ->with(['usuario', 'proyecto']) // Cargar relaciones
+                     ->with(['usuario', 'proyecto']) 
                      ->orderBy('fecha_ingreso', 'desc');
-
-        // Aplicar filtros dinámicamente
         $query->when($filtros['estado'] ?? null, function ($q, $estado) {
             return $q->where('estado', $estado);
         });
@@ -43,27 +39,20 @@ class CasoController extends Controller
         $query->when($filtros['proyecto_id'] ?? null, function ($q, $proyectoId) {
             return $q->where('proyecto_id', $proyectoId);
         });
-
-        // Paginar resultados y añadir filtros a los enlaces de paginación
         $casos = $query->paginate(10)->appends($filtros);
-
-        // Pasar casos, proyectos y filtros a la vista
         return view('abogada.casos.index', compact('casos', 'proyectos', 'filtros'));
     }
-
-
     public function create()
     {
         $proyectos = Proyecto::orderBy('nombre')->get();
         return view('abogada.casos.form', compact('proyectos'));
     }
-
     public function store(Request $request)
     {
         $validated = $request->validate([
             'codigo_caso' => ['required', 'string', 'max:255', Rule::unique('casos')],
             'fecha_ingreso' => ['required', 'date'],
-            'estado' => ['required', 'string', Rule::in(['activo', 'cerrado'])],
+            'estado' => ['required', 'string', Rule::in(['activo', 'cerrado', 'En Juicio'])], // <-- CAMBIADO AQUÍ
             'proyecto_id' => ['nullable', 'integer', 'exists:proyectos,id'],
             'nombre_afectada' => ['required', 'string', 'max:255'],
             'dui' => ['nullable', 'string', 'max:20'],
@@ -81,30 +70,25 @@ class CasoController extends Controller
         $caso = new Caso($validated);
         $caso->usuario_id = Auth::id();
         $caso->save();
-
         if ($request->input('action') == 'save_and_form') {
             return redirect()->route('abogada.formularios.index', $caso)
                              ->with('success', 'Caso registrado. Por favor, llene el formulario de ingreso.');
         }
-
         return redirect()->route('abogada.casos.show', $caso)
                          ->with('success', 'Caso registrado exitosamente.');
     }
-
     public function show(Caso $caso)
     {
         $this->authorize('view', $caso);
         $caso->load('proyecto');
         return view('abogada.casos.show', compact('caso'));
     }
-
     public function edit(Caso $caso)
     {
         $this->authorize('update', $caso);
         $proyectos = Proyecto::orderBy('nombre')->get();
         return view('abogada.casos.form', compact('caso', 'proyectos'));
     }
-
     public function update(Request $request, Caso $caso)
     {
         $this->authorize('update', $caso);
@@ -112,7 +96,7 @@ class CasoController extends Controller
         $validated = $request->validate([
             'codigo_caso' => ['required', 'string', 'max:255', Rule::unique('casos')->ignore($caso->id)],
             'fecha_ingreso' => ['required', 'date'],
-            'estado' => ['required', 'string', Rule::in(['activo', 'cerrado'])],
+            'estado' => ['required', 'string', Rule::in(['activo', 'cerrado', 'En Juicio'])], // <-- CAMBIADO AQUÍ
             'proyecto_id' => ['nullable', 'integer', 'exists:proyectos,id'],
             'nombre_afectada' => ['required', 'string', 'max:255'],
             'dui' => ['nullable', 'string', 'max:20'],
